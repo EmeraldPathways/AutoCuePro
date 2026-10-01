@@ -1,0 +1,35 @@
+{
+  "name": "cueflow-autocue",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vinext dev",
+    "build": "vinext build",
+    "postbuild": "node scripts/prepare-sites.mjs",
+    "pages:build": "vite build --config vite.pages.config.ts",
+    "start": "vinext start",
+    "dev:vinext": "vinext dev --port 3001",
+    "build:vinext": "vinext build",
+    "start:vinext": "wrangler dev --config dist/server/wrangler.json",
+    "deploy:vinext": "vinext-cloudflare deploy --config dist/server/wrangler.json"
+  },
+  "dependencies": {
+    "@vinext/cloudflare": "^1.0.0-beta.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-server-dom-webpack": "^19.2.8",
+    "vinext": "^1.0.0-beta.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.46.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^6.0.4",
+    "@vitejs/plugin-rsc": "^0.5.30",
+    "typescript": "^5.8.3",
+    "vite": "^8.1.5",
+    "wrangler": "^4.113.0"
+  },
+  "type": "module"
+}
