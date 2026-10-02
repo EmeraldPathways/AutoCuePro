@@ -472,6 +472,10 @@ kbd {
 }
 
 .stage:fullscreen,
+body:has(.stage--fullscreen-fallback) {
+  overflow: hidden;
+}
+
 .stage--fullscreen-fallback {
   position: fixed;
   z-index: 1000;
