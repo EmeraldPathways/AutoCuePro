@@ -187,7 +187,7 @@ export default function Home() {
       frame = null;
       const height = stage.getBoundingClientRect().height;
       if (!height) return;
-      const fullscreen = document.fullscreenElement === stage || fullscreenTransitionRef.current;
+      const fullscreen = document.fullscreenElement === stage || fullscreenTransitionRef.current || stage.classList.contains("stage--fullscreen-fallback");
       if (fullscreen) {
         const previewHeight = previewStageHeightRef.current ?? height;
         setCueScale(clamp(height / previewHeight, 1, 2.5));
