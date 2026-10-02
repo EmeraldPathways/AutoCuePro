@@ -141,6 +141,70 @@ button {
   stroke-linejoin: round;
 }
 
+
+.shortcuts-overlay {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: rgba(13, 22, 17, 0.5);
+  backdrop-filter: blur(5px);
+}
+.shortcuts-dialog {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 0 24px 80px rgba(13, 22, 17, 0.28);
+}
+.shortcuts-dialog h2 {
+  margin: 0 0 22px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+.shortcuts-dialog dl { margin: 0; }
+.shortcuts-dialog dl > div {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: center;
+  border-top: 1px solid var(--line);
+}
+.shortcuts-dialog dd { margin: 0; color: var(--muted); font-size: 13px; }
+.shortcuts-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--panel);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.shortcuts-dialog kbd {
+  min-width: 26px;
+  display: inline-flex;
+  justify-content: center;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .workspace {
   width: min(1440px, 100%);
   min-height: calc(100vh - 72px);
@@ -407,11 +471,20 @@ kbd {
     0 4px 15px rgba(34, 50, 43, 0.08);
 }
 
-.stage:fullscreen {
+.stage:fullscreen,
+.stage--fullscreen-fallback {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   border: 0;
   border-radius: 0;
+}
+
+.stage--fullscreen-fallback {
+  box-shadow: none;
 }
 
 .stage-topline {

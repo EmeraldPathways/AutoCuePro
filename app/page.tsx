@@ -67,6 +67,8 @@ export default function Home() {
   const [focusZone, setFocusZone] = useState(false);
   const [ready, setReady] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fallbackFullscreen, setFallbackFullscreen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [cueScale, setCueScale] = useState(1);
   const stageRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -155,21 +157,26 @@ export default function Home() {
   }, []);
 
   const toggleFullscreen = useCallback(async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => setFallbackFullscreen(true));
+      return;
+    }
+    if (fallbackFullscreen) {
+      setFallbackFullscreen(false);
+      return;
+    }
+    const stage = stageRef.current;
+    if (!stage) return;
+    previewStageHeightRef.current = stage.getBoundingClientRect().height;
+    fullscreenTransitionRef.current = true;
     try {
-      if (!document.fullscreenElement) {
-        if (stageRef.current) {
-          previewStageHeightRef.current = stageRef.current.getBoundingClientRect().height;
-        }
-        fullscreenTransitionRef.current = true;
-        await stageRef.current?.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
+      await stage.requestFullscreen();
+      setFallbackFullscreen(false);
     } catch {
       fullscreenTransitionRef.current = false;
-      // Browsers may reject fullscreen when it is not triggered by a click.
+      setFallbackFullscreen(true);
     }
-  }, []);
+  }, [fallbackFullscreen]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -195,7 +202,8 @@ export default function Home() {
     };
     const onFullscreen = () => {
       fullscreenTransitionRef.current = false;
-      setIsFullscreen(Boolean(document.fullscreenElement));
+      setIsFullscreen(document.fullscreenElement === stage);
+      if (document.fullscreenElement === stage) setFallbackFullscreen(false);
       scheduleScaleUpdate();
     };
 
@@ -215,8 +223,19 @@ export default function Home() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
+      if (shortcutsOpen) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setShortcutsOpen(false);
+        }
+        return;
+      }
       if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") return;
-
+      if (event.key === "Escape" && fallbackFullscreen) {
+        event.preventDefault();
+        setFallbackFullscreen(false);
+        return;
+      }
       if (event.code === "Space") {
         event.preventDefault();
         setPlaying((value) => !value);
@@ -234,7 +253,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [restart, toggleFullscreen]);
+  }, [fallbackFullscreen, restart, shortcutsOpen, toggleFullscreen]);
 
   const wordCount = useMemo(
     () => script.trim().split(/\s+/).filter(Boolean).length,
@@ -259,7 +278,7 @@ export default function Home() {
             <span className="saved-dot" />
             Saved locally
           </span>
-          <button className="shortcut-button" type="button" title="Keyboard shortcuts">
+          <button className="shortcut-button" type="button" title="Keyboard shortcuts" aria-haspopup="dialog" aria-expanded={shortcutsOpen} onClick={() => setShortcutsOpen(true)}>
             <Icon>
               <svg viewBox="0 0 24 24" fill="none">
                 <rect x="2.5" y="5" width="19" height="14" rx="3" />
@@ -270,6 +289,23 @@ export default function Home() {
           </button>
         </div>
       </header>
+
+      {shortcutsOpen && (
+        <div className="shortcuts-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setShortcutsOpen(false); }}>
+          <section className="shortcuts-dialog" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+            <button className="shortcuts-close" type="button" aria-label="Close keyboard shortcuts" onClick={() => setShortcutsOpen(false)}>×</button>
+            <p className="eyebrow">Quick controls</p>
+            <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+            <dl>
+              <div><dt><kbd>Space</kbd></dt><dd>Play or pause</dd></div>
+              <div><dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Adjust scroll speed</dd></div>
+              <div><dt><kbd>R</kbd></dt><dd>Restart from the beginning</dd></div>
+              <div><dt><kbd>F</kbd></dt><dd>Enter or exit fullscreen</dd></div>
+              <div><dt><kbd>Esc</kbd></dt><dd>Exit fullscreen or close this panel</dd></div>
+            </dl>
+          </section>
+        </div>
+      )}
 
       <section className="workspace">
         <aside className="control-panel">
@@ -425,7 +461,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="stage" ref={stageRef}>
+          <div className={`stage${fallbackFullscreen ? " stage--fullscreen-fallback" : ""}`} ref={stageRef}>
             <div className="stage-topline">
               <span className="live-pill">
                 <span />
@@ -507,7 +543,7 @@ export default function Home() {
                 </Icon>
                 {playing ? "Pause" : "Start cue"}
               </button>
-              {isFullscreen ? (
+              {isFullscreen || fallbackFullscreen ? (
                 <button
                   className="secondary-control"
                   type="button"
