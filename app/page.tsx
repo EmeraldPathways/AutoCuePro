@@ -16,8 +16,21 @@ const clamp = (value: number, min: number, max: number) =>
 const MIN_SPEED = 0.5;
 const MAX_SPEED = 4;
 const SPEED_STEP = 0.1;
-const PIXELS_PER_SPEED = 32;
+const MIN_SCROLL_PIXELS_PER_SECOND = 18;
+const MAX_SCROLL_PIXELS_PER_SECOND = 220;
 const DEFAULT_SPEED = 1.7;
+
+const speedToPixelsPerSecond = (value: number) => {
+  const proportion = clamp(
+    (value - MIN_SPEED) / (MAX_SPEED - MIN_SPEED),
+    0,
+    1,
+  );
+  return (
+    MIN_SCROLL_PIXELS_PER_SECOND +
+    proportion * (MAX_SCROLL_PIXELS_PER_SECOND - MIN_SCROLL_PIXELS_PER_SECOND)
+  );
+};
 const MIN_FOCUS_STRENGTH = 20;
 const MAX_FOCUS_STRENGTH = 95;
 const DEFAULT_FOCUS_STRENGTH = 72;
@@ -69,6 +82,7 @@ export default function Home() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fallbackFullscreen, setFallbackFullscreen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [stageSettingsOpen, setStageSettingsOpen] = useState(false);
   const [cueScale, setCueScale] = useState(1);
   const stageRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -129,7 +143,7 @@ export default function Home() {
       if (!viewport) return;
       if (previousTimeRef.current !== null) {
         const elapsed = (time - previousTimeRef.current) / 1000;
-        scrollPositionRef.current += speed * PIXELS_PER_SPEED * cueScale * elapsed;
+        scrollPositionRef.current += speedToPixelsPerSecond(speed) * elapsed;
         viewport.scrollTop = scrollPositionRef.current;
         updateProgress();
         const end = viewport.scrollHeight - viewport.clientHeight;
@@ -230,6 +244,13 @@ export default function Home() {
         }
         return;
       }
+      if (stageSettingsOpen) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setStageSettingsOpen(false);
+        }
+        return;
+      }
       if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") return;
       if (event.key === "Escape" && fallbackFullscreen) {
         event.preventDefault();
@@ -253,14 +274,14 @@ export default function Home() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [fallbackFullscreen, restart, shortcutsOpen, toggleFullscreen]);
+  }, [fallbackFullscreen, restart, shortcutsOpen, stageSettingsOpen, toggleFullscreen]);
 
   const wordCount = useMemo(
     () => script.trim().split(/\s+/).filter(Boolean).length,
     [script],
   );
   const estimatedMinutes = Math.max(1, Math.ceil(wordCount / 135));
-  const scaledFontSize = fontSize * cueScale;
+  const scaledFontSize = fontSize;
 
   return (
     <main className="app-shell">
@@ -482,9 +503,63 @@ export default function Home() {
                   </Icon>
                   Focus
                 </button>
+                <button
+                  className={`stage-settings-toggle${stageSettingsOpen ? " is-active" : ""}`}
+                  type="button"
+                  aria-label={`${stageSettingsOpen ? "Hide" : "Show"} cue settings`}
+                  aria-expanded={stageSettingsOpen}
+                  aria-controls="cueflow-stage-settings"
+                  onClick={() => setStageSettingsOpen((value) => !value)}
+                >
+                  <Icon size={15}>
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M4 6h16M4 12h16M4 18h16M9 4v4M15 10v4M11 16v4" />
+                    </svg>
+                  </Icon>
+                  Settings
+                </button>
                 <span>{Math.round(progress * 100)}%</span>
               </span>
             </div>
+
+            {stageSettingsOpen && (
+              <div className="stage-settings" id="cueflow-stage-settings">
+                <label className="stage-setting">
+                  <span>
+                    <span>Text size</span>
+                    <output>{fontSize} px</output>
+                  </span>
+                  <input
+                    id="fullscreen-text-size"
+                    type="range"
+                    min="32"
+                    max="104"
+                    step="2"
+                    value={fontSize}
+                    aria-label="Fullscreen text size"
+                    onChange={(event) => setFontSize(Number(event.target.value))}
+                    style={{ "--value": `${((fontSize - 32) / 72) * 100}%` } as React.CSSProperties}
+                  />
+                </label>
+                <label className="stage-setting">
+                  <span>
+                    <span>Scroll speed</span>
+                    <output>{speed.toFixed(1)}×</output>
+                  </span>
+                  <input
+                    id="fullscreen-scroll-speed"
+                    type="range"
+                    min={MIN_SPEED}
+                    max={MAX_SPEED}
+                    step={SPEED_STEP}
+                    value={speed}
+                    aria-label="Fullscreen scroll speed"
+                    onChange={(event) => setSpeed(roundSpeed(Number(event.target.value)))}
+                    style={{ "--value": `${((speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)) * 100}%` } as React.CSSProperties}
+                  />
+                </label>
+              </div>
+            )}
 
             <div
               className="cue-viewport"

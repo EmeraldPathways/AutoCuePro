@@ -491,6 +491,57 @@ body:has(.stage--fullscreen-fallback) {
   box-shadow: none;
 }
 
+
+.stage-settings {
+  position: absolute;
+  z-index: 7;
+  top: 56px;
+  right: 22px;
+  width: min(280px, calc(100% - 44px));
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(17, 22, 19, 0.94);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+}
+
+.stage-setting {
+  display: block;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stage-setting + .stage-setting {
+  margin-top: 16px;
+}
+
+.stage-setting > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stage-setting output {
+  color: #e7f3ec;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage-setting input[type="range"] {
+  margin-top: 12px;
+  background: linear-gradient(
+    to right,
+    #8cb39e var(--value),
+    rgba(255, 255, 255, 0.18) var(--value)
+  );
+}
+
 .stage-topline {
   position: absolute;
   z-index: 5;
@@ -514,7 +565,8 @@ body:has(.stage--fullscreen-fallback) {
   gap: 14px;
 }
 
-.stage-focus-button {
+.stage-focus-button,
+.stage-settings-toggle {
   padding: 6px 9px;
   display: flex;
   align-items: center;
@@ -530,7 +582,9 @@ body:has(.stage--fullscreen-fallback) {
 }
 
 .stage-focus-button:hover,
-.stage-focus-button.is-active {
+.stage-focus-button.is-active,
+.stage-settings-toggle:hover,
+.stage-settings-toggle.is-active {
   color: #dff2e8;
   border-color: rgba(140, 179, 158, 0.5);
   background: rgba(79, 128, 104, 0.28);
